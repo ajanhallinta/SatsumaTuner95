@@ -182,9 +182,7 @@ namespace SatsumaTuner95
 
             // wheel x offset hack
             if (useCustomWheelOffsets)
-            {
                 UpdateCustomWheelOffsets();
-            }
 
             // wheel offset settings has changed, reset to defaults if needed
             if (wasWheelOffsetModActive != useCustomWheelOffsets)
@@ -297,6 +295,7 @@ namespace SatsumaTuner95
                 if (guiShowTransmission)
                     TransmissionGUI();
 
+                // Gears
                 if (GUILayout.Button("Gears"))
                     guiShowGears = !guiShowGears;
                 if (guiShowGears)
@@ -414,15 +413,17 @@ namespace SatsumaTuner95
                 GUILayout.BeginHorizontal();
 
                 if (i < drivetrain.gearRatios.Length)
+                {
                     GUILayout.Label("Gear " + i + ": " + drivetrain.gearRatios[i]);
 
-                if (GUIFields.FloatField.DrawFloatField(gearRatios[i], false, true, true, 100))
-                    Helpers.SetGearRatio(drivetrain, i, gearRatios[i].FloatVariable);
+                    if (GUIFields.FloatField.DrawFloatField(gearRatios[i], false, true, true, 100))
+                        Helpers.SetGearRatio(drivetrain, i, gearRatios[i].FloatVariable);
 
-                if (GUILayout.Button("Remove", GUILayout.Width(100)))
-                {
-                    Helpers.RemoveGear(drivetrain, i);
-                    CreateGearRatioFloatFields();
+                    if (GUILayout.Button("Remove", GUILayout.Width(100)))
+                    {
+                        Helpers.RemoveGear(drivetrain, i);
+                        CreateGearRatioFloatFields();
+                    }
                 }
 
                 GUILayout.EndHorizontal();
