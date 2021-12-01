@@ -26,11 +26,13 @@ namespace SatsumaTuner95
         private PlayMakerFSM boostFsm;
         private PlayMakerFSM revLimiterFsm;
 
+        // satsuma wheel transforms
         private Transform wheelFL;
         private Transform wheelFR;
         private Transform wheelRL;
         private Transform wheelRR;
 
+        // various FSM State Actions to disable, when using power multiplier override
         private FloatClamp boostPowerFloatClamp;
         private SetProperty waitPlayerSetProperty;
         private FloatClamp revLimiterFloatClamp;
@@ -52,18 +54,22 @@ namespace SatsumaTuner95
         private List<GUIFields.FloatField> gearRatios = new List<GUIFields.FloatField>();
         private List<float> defaultGearRatios = new List<float>();
 
-        private float increaseAmount = 0.01f; // for + and - buttons
-        private GUIFields.FloatField increaseAmountField;
-
+        // custom wheel offset settings and FloatFields
         private bool useCustomWheelOffsets = false;
         private GUIFields.FloatField frontWheelsOffsetX, rearWheelsOffsetX;
         private float frontWheelOffsetX, rearWheelOffsetX;
         private Vector3 originalFlPosition, originalFrPosition, originalRlPosition, originalRrPosition;
 
+        // increase amount field
+        private float increaseAmount = 0.01f; // for + and - buttons
+        private GUIFields.FloatField increaseAmountField;
+
+        // misc
         private bool hasInitialized = false;
         private bool isEnabled = false;
         private bool useCustomPowerMultiplier = false;
 
+        // gui positions
         Rect windowRect = new Rect(20, 20, 425, 150);
         Vector2 scrollPos = Vector2.zero;
 
@@ -77,11 +83,13 @@ namespace SatsumaTuner95
             suspension = satsuma.Find("CarSimulation/Car/Suspension").GetComponent<PlayMakerFSM>();
             revLimiterFsm = satsuma.Find("CarSimulation/Engine/RevLimiter").GetComponent<PlayMakerFSM>();
 
+            // Get wheel transforms
             wheelFL = satsuma.Find("FL");
             wheelFR = satsuma.Find("FR");
             wheelRL = satsuma.Find("RL");
             wheelRR = satsuma.Find("RR");
 
+            // Store wheel transform default localPositions for restoring later
             if (wheelFL)
                 originalFlPosition = wheelFL.transform.localPosition;
             if (wheelFR)
@@ -115,13 +123,11 @@ namespace SatsumaTuner95
             frontWheelsOffsetX = GUIFields.FloatField.CreateFloatField(frontWheelOffsetX, "Front Wheels Offset X");
             rearWheelsOffsetX = GUIFields.FloatField.CreateFloatField(rearWheelOffsetX, "Rear Wheels Offset Y");
 
+            // Store default gear ratios and create FloatFields
             if (drivetrain)
             {
-                for (int i = 0; i < drivetrain.gearRatios.Length; i++)
-                {
-                    gearRatios.Add(GUIFields.FloatField.CreateFloatField(drivetrain.gearRatios[i], "Gear " + i));
-                }
                 defaultGearRatios = drivetrain.gearRatios.ToList();
+                CreateGearRatioFloatFields();
             }
 
             increaseAmountField = GUIFields.FloatField.CreateFloatField(increaseAmount, "+/- ");
@@ -163,6 +169,7 @@ namespace SatsumaTuner95
         private bool wasWheelOffsetModActive = false;
         private void Update()
         {
+            // power multiplier override settings was changed, toggle hack
             if (boostFsm && boostFsm.Active && wasPowerMultiplierHackActive != useCustomPowerMultiplier)
             {
                 TogglePowerMultiplierOverrideHack();
@@ -178,6 +185,8 @@ namespace SatsumaTuner95
             {
                 UpdateCustomWheelOffsets();
             }
+
+            // wheel offset settings has changed, reset to defaults if needed
             if (wasWheelOffsetModActive != useCustomWheelOffsets)
             {
                 if (!useCustomWheelOffsets)
@@ -190,6 +199,7 @@ namespace SatsumaTuner95
                 isEnabled = !isEnabled;
         }
 
+        // Disable or Enable powerMultiplier related FSM State Actions from various Satsuma FSMs
         private void TogglePowerMultiplierOverrideHack()
         {
             bool value = !useCustomPowerMultiplier;
@@ -336,7 +346,6 @@ namespace SatsumaTuner95
             GUILayout.BeginVertical("box");
 
             // Automatic bools
-            //drivetrain.canStall = GUILayout.Toggle(drivetrain.canStall, "Can stall: " + drivetrain.canStall);
             drivetrain.automatic = GUILayout.Toggle(drivetrain.automatic, "Automatic: " + drivetrain.automatic);
             drivetrain.autoReverse = GUILayout.Toggle(drivetrain.autoReverse, "Auto reverse: " + drivetrain.autoReverse);
 
@@ -452,14 +461,19 @@ namespace SatsumaTuner95
         public SaveData CreateSaveData()
         {
             SaveData data = new SaveData();
+
+            // suspensions
             data.WheelPosLong = wheelPosLong.FloatVariable.Value;
             data.WheelPosRally = wheelPosRally.FloatVariable.Value;
             data.WheelPosStock = wheelPosStock.FloatVariable.Value;
+
+            // power multiplier
             data.PowerMultiplierOverride = powerMultiplierOverride.FloatVariable;
             data.PowerMultiplierOverrideEnabled = useCustomPowerMultiplier;
 
             if (drivetrain)
             {
+                // transmission
                 data.Automatic = drivetrain.automatic;
                 data.AutoReverse = drivetrain.autoReverse;
                 data.Transmission = drivetrain.transmission;
@@ -469,6 +483,7 @@ namespace SatsumaTuner95
                     data.GearRatios = drivetrain.gearRatios.ToList();
             }
 
+            // driving assistances
             if (axisCarController)
             {
                 data.ABS = axisCarController.ABS;
