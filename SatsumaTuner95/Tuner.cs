@@ -857,33 +857,8 @@ namespace SatsumaTuner95
             }
 
             // suspension
-            // suspension travel
-            travelLong.RestoreValue();
-            travelRally.RestoreValue();
-            travelStock.RestoreValue();
-
-            // suspension rates
-            rallyFrontRate.RestoreValue();
-            stockFrontRate.RestoreValue();
-            longRearRate.RestoreValue();
-            rallyRearRate.RestoreValue();
-            stockRearRate.RestoreValue();
-
-            // suspension bump and rebound
-            rallyFrontLBump.RestoreValue();
-            rallyFrontLRebound.RestoreValue();
-            rallyFrontRBump.RestoreValue();
-            rallyFrontRRebound.RestoreValue();
-            rallyRearLBump.RestoreValue();
-            rallyRearLRebound.RestoreValue();
-            rallyRearRBump.RestoreValue();
-            rallyRearRRebound.RestoreValue();
-
-            stockFrontBump.RestoreValue();
-            stockFrontRebound.RestoreValue();
-            stockRearBump.RestoreValue();
-            stockRearRebound.RestoreValue();
-
+            ResetSuspensionValues(-1);
+            
             SatsumaTuner95.DebugPrint("Restored default values.");
         }
         #endregion
