@@ -29,12 +29,12 @@ namespace SatsumaTuner95
                 return field;
             }
 
-            public static void DrawFsmFloatField(FsmFloatField fsmFloatField, bool addIncreaseDecreaseButtons = false)
+            public static void DrawFsmFloatField(FsmFloatField fsmFloatField, bool addIncreaseDecreaseButtons = false, bool printCurrentValue = false)
             {
                 bool valueHasChanged = false; // Parses new value from TextField, when set to true.
 
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(fsmFloatField.DisplayName + ": ");
+                GUILayout.Label(fsmFloatField.DisplayName + ": " + (printCurrentValue ? fsmFloatField.FloatVariable.Value.ToString() : ""));
 
                 // Check for enter input
                 if (Event.current.Equals(Event.KeyboardEvent("return")))
@@ -73,8 +73,11 @@ namespace SatsumaTuner95
             {
                 UpdateNewValue(FloatVariable.Value += amount);
             }
-            public void UpdateNewValue(float newValue)
+            public void UpdateNewValue(float newValue, bool skipZeroValue = false)
             {
+                if (skipZeroValue && newValue == 0) // (optional) prevent assigning zero values (ie. uninitialized suspension savedata)
+                    return;
+
                 FloatVariable.Value = newValue;
                 ValueString = FloatVariable.Value.ToString();
             }

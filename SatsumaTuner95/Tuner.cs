@@ -15,6 +15,7 @@ namespace SatsumaTuner95
         private bool guiShowPower = false;
         private bool guiShowTransmission = false;
         private bool guiShowGears = false;
+        private bool guiShowWheels = false;
         private bool guiShowSuspension = false;
         private bool guiShowDrivingAssistance = false;
 
@@ -40,10 +41,39 @@ namespace SatsumaTuner95
         private FloatOperator revLimiterFloatOperator;
         private SetProperty boostSetMultiplierSetProperty2;
 
-        // variable fields
+        // variable fields wheelpos
         private GUIFields.FsmFloatField wheelPosLong;
         private GUIFields.FsmFloatField wheelPosRally;
         private GUIFields.FsmFloatField wheelPosStock;
+
+        // variable fields suspension properties
+        // travel
+        private GUIFields.FsmFloatField travelLong;
+        private GUIFields.FsmFloatField travelRally;
+        private GUIFields.FsmFloatField travelStock;
+
+        // rates
+        private GUIFields.FsmFloatField rallyFrontRate;
+        private GUIFields.FsmFloatField stockFrontRate;
+        private GUIFields.FsmFloatField longRearRate;
+        private GUIFields.FsmFloatField rallyRearRate;
+        private GUIFields.FsmFloatField stockRearRate;
+        // bump and rebound
+        private GUIFields.FsmFloatField rallyFrontLBump;
+        private GUIFields.FsmFloatField rallyFrontLRebound;
+        private GUIFields.FsmFloatField rallyFrontRBump;
+        private GUIFields.FsmFloatField rallyFrontRRebound;
+        private GUIFields.FsmFloatField rallyRearLBump;
+        private GUIFields.FsmFloatField rallyRearLRebound;
+        private GUIFields.FsmFloatField rallyRearRBump;
+        private GUIFields.FsmFloatField rallyRearRRebound;
+
+        private GUIFields.FsmFloatField stockFrontBump;
+        private GUIFields.FsmFloatField stockFrontRebound;
+        private GUIFields.FsmFloatField stockRearBump;
+        private GUIFields.FsmFloatField stockRearRebound;
+
+        // variable fields misc
         private GUIFields.FloatField powerMultiplierOverride;
         private GUIFields.FloatField tcsAllowedSlip;
         private GUIFields.FloatField tcsMinVelocity;
@@ -122,6 +152,33 @@ namespace SatsumaTuner95
 
             frontWheelsOffsetX = GUIFields.FloatField.CreateFloatField(frontWheelOffsetX, "Front Wheels Offset X");
             rearWheelsOffsetX = GUIFields.FloatField.CreateFloatField(rearWheelOffsetX, "Rear Wheels Offset Y");
+
+            // travel
+            travelLong = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "TravelLong"));
+            travelRally = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "TravelRally"));
+            travelStock = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "TravelStock"));
+
+            // rates
+            rallyFrontRate = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyFrontRate"));
+            stockFrontRate = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "StockFrontRate"));
+            longRearRate = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "LongRearRate"));
+            rallyRearRate = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyRearRate"));
+            stockRearRate = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "StockRearRate"));
+
+            // bump and rebound
+            rallyFrontLBump = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyFrontLBump"));
+            rallyFrontLRebound = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyFrontLRebound"));
+            rallyFrontRBump = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyFrontRBump"));
+            rallyFrontRRebound = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyFrontRRebound"));
+            rallyRearLBump = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyRearLBump"));
+            rallyRearLRebound = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyRearLRebound"));
+            rallyRearRBump = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyRearRBump"));
+            rallyRearRRebound = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyRearRRebound"));
+
+            stockFrontBump = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "StockFrontBump"));
+            stockFrontRebound = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "StockFrontRebound"));
+            stockRearBump = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "StockRearBump"));
+            stockRearRebound = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "StockRearRebound"));
 
             // Store default gear ratios and create FloatFields
             if (drivetrain)
@@ -253,6 +310,57 @@ namespace SatsumaTuner95
             rearWheelsOffsetX.RestoreValue();
         }
 
+        private void ResetSuspensionValues(int suspension = -1) // -1: All, 0: STOCK, 1: RALLY, 2: LONG
+        {
+            bool resetStock = (suspension == 0 || suspension == -1);
+            bool resetRally = (suspension == 1 || suspension == -1);
+            bool resetLong = (suspension == 2 || suspension == -1);
+
+            if(resetStock)
+            {
+                // travel
+                travelStock.RestoreValue();
+
+                // rate
+                stockFrontRate.RestoreValue();
+                stockRearRate.RestoreValue();
+
+                // bump and rebound
+                stockFrontBump.RestoreValue();
+                stockFrontRebound.RestoreValue();
+                stockRearBump.RestoreValue();
+                stockRearRebound.RestoreValue();
+            }
+
+            if(resetRally)
+            {
+                // travel
+                travelRally.RestoreValue();
+
+                // rate
+                rallyFrontRate.RestoreValue();
+                rallyRearRate.RestoreValue();
+
+                // bump and rebound
+                rallyFrontLBump.RestoreValue();
+                rallyFrontLRebound.RestoreValue();
+                rallyFrontRBump.RestoreValue();
+                rallyFrontRRebound.RestoreValue();
+                rallyRearLBump.RestoreValue();
+                rallyRearLRebound.RestoreValue();
+                rallyRearRBump.RestoreValue();
+                rallyRearRRebound.RestoreValue();
+            }
+
+            if(resetLong)
+            {
+                // travel
+                travelLong.RestoreValue();
+                // rate
+                longRearRate.RestoreValue();
+            }
+        }
+
         #region GUI
         private void OnGUI()
         {
@@ -302,8 +410,14 @@ namespace SatsumaTuner95
                     GearsGUI();
             }
 
+            // Wheels
+            if (GUILayout.Button("Wheels"))
+                guiShowWheels = !guiShowWheels;
+            if (guiShowWheels)
+                WheelsGUI();
+
             // Suspension
-            if (GUILayout.Button("Suspension and Wheels"))
+            if (GUILayout.Button("Suspension"))
                 guiShowSuspension = !guiShowSuspension;
             if (guiShowSuspension)
                 SuspensionGUI();
@@ -362,14 +476,14 @@ namespace SatsumaTuner95
             GUILayout.EndVertical();
         }
 
-        private void SuspensionGUI()
+        private void WheelsGUI()
         {
             GUILayout.BeginVertical("box");
 
             // Suspension height (wheel position)
-            GUIFields.FsmFloatField.DrawFsmFloatField(wheelPosStock, true);
-            GUIFields.FsmFloatField.DrawFsmFloatField(wheelPosLong, true);
-            GUIFields.FsmFloatField.DrawFsmFloatField(wheelPosRally, true);
+            GUIFields.FsmFloatField.DrawFsmFloatField(wheelPosStock, true, true);
+            GUIFields.FsmFloatField.DrawFsmFloatField(wheelPosLong, true, true);
+            GUIFields.FsmFloatField.DrawFsmFloatField(wheelPosRally, true, true);
 
             // Custom wheel offset X
             useCustomWheelOffsets = GUILayout.Toggle(useCustomWheelOffsets, "Use custom wheel offsets");
@@ -380,6 +494,82 @@ namespace SatsumaTuner95
             rearWheelOffsetX = rearWheelsOffsetX.FloatVariable;
 
             GUILayout.EndVertical();
+        }
+
+        private int selectedSuspension = 0; // 0: STOCK, 1: RALLY, 2: LONG
+        private void SuspensionGUI()
+        {
+            GUILayout.BeginVertical("box");
+
+            // get selected suspension name
+            string suspensionName = "Stock";
+            if (selectedSuspension == 1)
+                suspensionName = "Rally";
+            else if (selectedSuspension == 2)
+                suspensionName = "Long";
+
+            // reset selected suspension
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Selected suspension: " + suspensionName);
+            if (GUILayout.Button("Restore " + suspensionName + " values"))
+                ResetSuspensionValues(selectedSuspension);
+            GUILayout.EndHorizontal();
+
+            // select suspension buttons
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Stock"))
+                selectedSuspension = 0;
+            if (GUILayout.Button("Rally"))
+                selectedSuspension = 1;
+            if (GUILayout.Button("Long"))
+                selectedSuspension = 2;
+            GUILayout.EndHorizontal();
+
+            // draw selected suspension GUI
+            GUILayout.BeginVertical("box");
+            SelectedSuspensionGUI();
+            GUILayout.EndVertical();
+
+            // reset all suspensions
+            if (GUILayout.Button("Restore all suspensions values"))
+                ResetSuspensionValues(-1);
+
+            GUILayout.EndVertical();
+        }
+
+        private void SelectedSuspensionGUI()
+        {
+            switch (selectedSuspension)
+            {
+                case 0: // STOCK
+                    GUIFields.FsmFloatField.DrawFsmFloatField(travelStock, true, true);
+                    GUIFields.FsmFloatField.DrawFsmFloatField(stockFrontRate, true, true);
+                    GUIFields.FsmFloatField.DrawFsmFloatField(stockFrontBump, true, true);
+                    GUIFields.FsmFloatField.DrawFsmFloatField(stockFrontRebound, true, true);
+                    GUIFields.FsmFloatField.DrawFsmFloatField(stockRearRate, true, true);
+                    GUIFields.FsmFloatField.DrawFsmFloatField(stockRearBump, true, true);
+                    GUIFields.FsmFloatField.DrawFsmFloatField(stockRearRebound, true, true);
+                    break;
+                case 1: // RALLY
+                    GUIFields.FsmFloatField.DrawFsmFloatField(travelRally, true, true);
+                    GUIFields.FsmFloatField.DrawFsmFloatField(rallyFrontRate, true, true);
+                    GUIFields.FsmFloatField.DrawFsmFloatField(rallyFrontRBump, true, true);
+                    GUIFields.FsmFloatField.DrawFsmFloatField(rallyFrontLBump, true, true);
+                    GUIFields.FsmFloatField.DrawFsmFloatField(rallyFrontRRebound, true, true);
+                    GUIFields.FsmFloatField.DrawFsmFloatField(rallyFrontLRebound, true, true);
+                    GUIFields.FsmFloatField.DrawFsmFloatField(rallyRearRate, true, true);
+                    GUIFields.FsmFloatField.DrawFsmFloatField(rallyRearRBump, true, true);
+                    GUIFields.FsmFloatField.DrawFsmFloatField(rallyRearLBump, true, true);
+                    GUIFields.FsmFloatField.DrawFsmFloatField(rallyRearRRebound, true, true);
+                    GUIFields.FsmFloatField.DrawFsmFloatField(rallyRearLRebound, true, true);
+                    break;
+                case 2: // LONG
+                    GUIFields.FsmFloatField.DrawFsmFloatField(travelLong, true, true);
+                    GUIFields.FsmFloatField.DrawFsmFloatField(longRearRate, true, true);
+                    break;
+                default:
+                    break;
+            }
         }
 
         private void PowerGUI()
@@ -463,10 +653,15 @@ namespace SatsumaTuner95
         {
             SaveData data = new SaveData();
 
-            // suspensions
+            // wheelpos
             data.WheelPosLong = wheelPosLong.FloatVariable.Value;
             data.WheelPosRally = wheelPosRally.FloatVariable.Value;
             data.WheelPosStock = wheelPosStock.FloatVariable.Value;
+
+            // wheels
+            data.CustomWheelsOffsetEnabled = useCustomWheelOffsets;
+            data.FrontWheelsOffsetX = frontWheelOffsetX;
+            data.RearWheelsOffsetX = rearWheelOffsetX;
 
             // power multiplier
             data.PowerMultiplierOverride = powerMultiplierOverride.FloatVariable;
@@ -498,10 +693,33 @@ namespace SatsumaTuner95
                 data.TcsMinVelocity = axisCarController.TCSMinVelocity;
             }
 
-            // wheels
-            data.CustomWheelsOffsetEnabled = useCustomWheelOffsets;
-            data.FrontWheelsOffsetX = frontWheelOffsetX;
-            data.RearWheelsOffsetX = rearWheelOffsetX;
+            // suspension
+            // suspension travel
+            data.TravelLong = travelLong.FloatVariable.Value;
+            data.TravelRally = travelRally.FloatVariable.Value;
+            data.TravelStock = travelStock.FloatVariable.Value;
+
+            // suspension rates
+            data.RallyFrontRate = rallyFrontRate.FloatVariable.Value;
+            data.StockFrontRate = stockFrontRate.FloatVariable.Value;
+            data.LongRearRate = longRearRate.FloatVariable.Value;
+            data.RallyRearRate = rallyRearRate.FloatVariable.Value;
+            data.StockRearRate = stockRearRate.FloatVariable.Value;
+
+            // suspension bump and rebound
+            data.RallyFrontLBump = rallyFrontLBump.FloatVariable.Value;
+            data.RallyFrontLRebound = rallyFrontLRebound.FloatVariable.Value;
+            data.RallyFrontRBump = rallyFrontRBump.FloatVariable.Value;
+            data.RallyFrontRRebound = rallyFrontRRebound.FloatVariable.Value;
+            data.RallyRearLBump = rallyRearLBump.FloatVariable.Value;
+            data.RallyRearLRebound = rallyRearLRebound.FloatVariable.Value;
+            data.RallyRearRBump = rallyRearRBump.FloatVariable.Value;
+            data.RallyRearRRebound = rallyRearRRebound.FloatVariable.Value;
+
+            data.StockFrontBump = stockFrontBump.FloatVariable.Value;
+            data.StockFrontRebound = stockFrontRebound.FloatVariable.Value;
+            data.StockRearBump = stockRearBump.FloatVariable.Value;
+            data.StockRearRebound = stockRearRebound.FloatVariable.Value;
 
             SatsumaTuner95.DebugPrint("Created SaveData.");
             return data;
@@ -509,11 +727,6 @@ namespace SatsumaTuner95
 
         public void SetSaveData(SaveData saveData)
         {
-            // suspensions
-            wheelPosLong.UpdateNewValue(saveData.WheelPosLong);
-            wheelPosRally.UpdateNewValue(saveData.WheelPosRally);
-            wheelPosStock.UpdateNewValue(saveData.WheelPosStock);
-
             // power
             powerMultiplierOverride.UpdateNewValue(saveData.PowerMultiplierOverride);
             useCustomPowerMultiplier = saveData.PowerMultiplierOverrideEnabled;
@@ -553,19 +766,52 @@ namespace SatsumaTuner95
                 axisCarController.TCSMinVelocity = saveData.TcsMinVelocity;
             }
 
-            // wheels
+            // wheels custom offset
             useCustomWheelOffsets = saveData.CustomWheelsOffsetEnabled;
             frontWheelOffsetX = saveData.FrontWheelsOffsetX;
             rearWheelOffsetX = saveData.RearWheelsOffsetX;
             frontWheelsOffsetX.UpdateNewValue(saveData.FrontWheelsOffsetX);
             rearWheelsOffsetX.UpdateNewValue(saveData.RearWheelsOffsetX);
 
+            // wheelpos
+            wheelPosLong.UpdateNewValue(saveData.WheelPosLong, true);
+            wheelPosRally.UpdateNewValue(saveData.WheelPosRally, true);
+            wheelPosStock.UpdateNewValue(saveData.WheelPosStock, true);
+
+            // suspension
+            // suspension travel
+            travelLong.UpdateNewValue(saveData.TravelLong, true);
+            travelRally.UpdateNewValue(saveData.TravelRally, true);
+            travelStock.UpdateNewValue(saveData.TravelStock, true);
+
+            // suspension rates
+            rallyFrontRate.UpdateNewValue(saveData.RallyFrontRate, true);
+            stockFrontRate.UpdateNewValue(saveData.StockFrontRate, true);
+            longRearRate.UpdateNewValue(saveData.LongRearRate, true);
+            rallyRearRate.UpdateNewValue(saveData.RallyRearRate, true);
+            stockRearRate.UpdateNewValue(saveData.StockRearRate, true);
+
+            // suspension bump and rebound
+            rallyFrontLBump.UpdateNewValue(saveData.RallyFrontLBump, true);
+            rallyFrontLRebound.UpdateNewValue(saveData.RallyFrontLRebound, true);
+            rallyFrontRBump.UpdateNewValue(saveData.RallyFrontRBump, true);
+            rallyFrontRRebound.UpdateNewValue(saveData.RallyFrontRRebound, true);
+            rallyRearLBump.UpdateNewValue(saveData.RallyRearLBump, true);
+            rallyRearLRebound.UpdateNewValue(saveData.RallyRearLRebound, true);
+            rallyRearRBump.UpdateNewValue(saveData.RallyRearRBump, true);
+            rallyRearRRebound.UpdateNewValue(saveData.RallyRearRRebound, true);
+
+            stockFrontBump.UpdateNewValue(saveData.StockFrontBump, true);
+            stockFrontRebound.UpdateNewValue(saveData.StockFrontRebound, true);
+            stockRearBump.UpdateNewValue(saveData.StockRearBump, true);
+            stockRearRebound.UpdateNewValue(saveData.StockRearRebound, true);
+
             SatsumaTuner95.DebugPrint("Applied SaveData.");
         }
 
         public void RestoreDefaultValues()
         {
-            // suspensions
+            // wheel pos
             wheelPosLong.RestoreValue();
             wheelPosRally.RestoreValue();
             wheelPosStock.RestoreValue();
@@ -609,6 +855,34 @@ namespace SatsumaTuner95
                 tcsAllowedSlip.RestoreValue();
                 tcsMinVelocity.RestoreValue();
             }
+
+            // suspension
+            // suspension travel
+            travelLong.RestoreValue();
+            travelRally.RestoreValue();
+            travelStock.RestoreValue();
+
+            // suspension rates
+            rallyFrontRate.RestoreValue();
+            stockFrontRate.RestoreValue();
+            longRearRate.RestoreValue();
+            rallyRearRate.RestoreValue();
+            stockRearRate.RestoreValue();
+
+            // suspension bump and rebound
+            rallyFrontLBump.RestoreValue();
+            rallyFrontLRebound.RestoreValue();
+            rallyFrontRBump.RestoreValue();
+            rallyFrontRRebound.RestoreValue();
+            rallyRearLBump.RestoreValue();
+            rallyRearLRebound.RestoreValue();
+            rallyRearRBump.RestoreValue();
+            rallyRearRRebound.RestoreValue();
+
+            stockFrontBump.RestoreValue();
+            stockFrontRebound.RestoreValue();
+            stockRearBump.RestoreValue();
+            stockRearRebound.RestoreValue();
 
             SatsumaTuner95.DebugPrint("Restored default values.");
         }
