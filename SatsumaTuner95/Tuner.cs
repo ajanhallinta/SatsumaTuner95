@@ -41,6 +41,9 @@ namespace SatsumaTuner95
         private FloatOperator revLimiterFloatOperator;
         private SetProperty boostSetMultiplierSetProperty2;
 
+        // global power multiplier FsmFloat
+        private FsmFloat globalPowerMultiplierFsmFloat;
+
         // variable fields wheelpos
         private GUIFields.FsmFloatField wheelPosLong;
         private GUIFields.FsmFloatField wheelPosRally;
@@ -112,6 +115,9 @@ namespace SatsumaTuner95
             // TODO: failsafes
             suspension = satsuma.Find("CarSimulation/Car/Suspension").GetComponent<PlayMakerFSM>();
             revLimiterFsm = satsuma.Find("CarSimulation/Engine/RevLimiter").GetComponent<PlayMakerFSM>();
+
+            // Get Global FsmFloat for powerMultiplier
+            globalPowerMultiplierFsmFloat = PlayMakerGlobals.Instance.Variables.GetFsmFloat("EnginePowerMultiplier");
 
             // Get wheel transforms
             wheelFL = satsuma.Find("FL");
@@ -290,6 +296,9 @@ namespace SatsumaTuner95
             // prevent NaN
             if (powerMultiplierOverride.FloatVariable < 0.1f)
                 powerMultiplierOverride.FloatVariable = 0.1f;
+
+            // apply new powerMultiplier value to global FsmFloat and Drivetrain itself
+            globalPowerMultiplierFsmFloat.Value = powerMultiplierOverride.FloatVariable;
             drivetrain.powerMultiplier = powerMultiplierOverride.FloatVariable;
         }
 
