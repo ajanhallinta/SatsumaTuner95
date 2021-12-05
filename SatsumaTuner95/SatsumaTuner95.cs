@@ -9,11 +9,11 @@ namespace SatsumaTuner95
         public override string ID => "SatsumaTuner95"; //Your mod ID (unique)
         public override string Name => "SatsumaTuner95"; //You mod name
         public override string Author => "ajanhallinta"; //Your Username
-        public override string Version => "0.2"; //Version
+        public override string Version => "0.21"; //Version
         public override string Description => "A tuner mod for your precious Satsuma."; //Short description of your mod
 
         public static SatsumaTuner95 Instance;
-        public static string VersionString = " (v0.2)";
+        public static string VersionString = " (v0.21)";
         public static string SaveFilename = "satsuma_save.xml";
         public static Keybind ActivateKey;
         private static SettingsCheckBox saveTunerSettingsAutomatically;
