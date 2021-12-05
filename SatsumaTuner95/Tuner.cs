@@ -23,7 +23,7 @@ namespace SatsumaTuner95
         private Transform satsuma;
         private Drivetrain drivetrain;
         private AxisCarController axisCarController;
-        private PlayMakerFSM suspension;
+        private PlayMakerFSM suspensionFsm;
         private PlayMakerFSM boostFsm;
         private PlayMakerFSM revLimiterFsm;
 
@@ -35,11 +35,11 @@ namespace SatsumaTuner95
 
         // various FSM State Actions to disable, when using power multiplier override
         private FloatClamp boostPowerFloatClamp;
-        private SetProperty waitPlayerSetProperty;
+        private SetProperty boostWaitPlayerSetProperty;
+        private SetProperty boostSetMultiplierSetProperty2;
         private FloatClamp revLimiterFloatClamp;
         private SetProperty revLimiterSetProperty;
         private FloatOperator revLimiterFloatOperator;
-        private SetProperty boostSetMultiplierSetProperty2;
 
         // global power multiplier FsmFloat
         private FsmFloat globalPowerMultiplierFsmFloat;
@@ -113,7 +113,7 @@ namespace SatsumaTuner95
             drivetrain = satsuma.GetComponent<Drivetrain>();
             axisCarController = satsuma.GetComponent<AxisCarController>();
             // TODO: failsafes
-            suspension = satsuma.Find("CarSimulation/Car/Suspension").GetComponent<PlayMakerFSM>();
+            suspensionFsm = satsuma.Find("CarSimulation/Car/Suspension").GetComponent<PlayMakerFSM>();
             revLimiterFsm = satsuma.Find("CarSimulation/Engine/RevLimiter").GetComponent<PlayMakerFSM>();
 
             // Get Global FsmFloat for powerMultiplier
@@ -141,7 +141,7 @@ namespace SatsumaTuner95
             }
             catch
             {
-                SatsumaTuner95.DebugPrint("Error when trying to get powerMultiplier!");
+                SatsumaTuner95.DebugPrint("Error when trying to get Boost FSM!");
             }
 
             // Create GUI variable fields
@@ -152,39 +152,39 @@ namespace SatsumaTuner95
             espMinVelocity = GUIFields.FloatField.CreateFloatField(axisCarController.ESPMinVelocity, "ESP Min Velocity");
             absAllowedSlip = GUIFields.FloatField.CreateFloatField(axisCarController.ABSAllowedSlip, "ABS Allowed Slip");
             absMinVelocity = GUIFields.FloatField.CreateFloatField(axisCarController.ABSMinVelocity, "ABS Min Velocity");
-            wheelPosLong = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "WheelPosLong"));
-            wheelPosRally = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "WheelPosRally"));
-            wheelPosStock = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "WheelPosStock"));
+            wheelPosLong = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "WheelPosLong"));
+            wheelPosRally = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "WheelPosRally"));
+            wheelPosStock = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "WheelPosStock"));
 
             frontWheelsOffsetX = GUIFields.FloatField.CreateFloatField(frontWheelOffsetX, "Front Wheels Offset X");
             rearWheelsOffsetX = GUIFields.FloatField.CreateFloatField(rearWheelOffsetX, "Rear Wheels Offset Y");
 
             // travel
-            travelLong = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "TravelLong"));
-            travelRally = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "TravelRally"));
-            travelStock = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "TravelStock"));
+            travelLong = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "TravelLong"));
+            travelRally = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "TravelRally"));
+            travelStock = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "TravelStock"));
 
             // rates
-            rallyFrontRate = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyFrontRate"));
-            stockFrontRate = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "StockFrontRate"));
-            longRearRate = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "LongRearRate"));
-            rallyRearRate = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyRearRate"));
-            stockRearRate = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "StockRearRate"));
+            rallyFrontRate = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "RallyFrontRate"));
+            stockFrontRate = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "StockFrontRate"));
+            longRearRate = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "LongRearRate"));
+            rallyRearRate = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "RallyRearRate"));
+            stockRearRate = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "StockRearRate"));
 
             // bump and rebound
-            rallyFrontLBump = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyFrontLBump"));
-            rallyFrontLRebound = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyFrontLRebound"));
-            rallyFrontRBump = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyFrontRBump"));
-            rallyFrontRRebound = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyFrontRRebound"));
-            rallyRearLBump = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyRearLBump"));
-            rallyRearLRebound = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyRearLRebound"));
-            rallyRearRBump = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyRearRBump"));
-            rallyRearRRebound = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "RallyRearRRebound"));
+            rallyFrontLBump = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "RallyFrontLBump"));
+            rallyFrontLRebound = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "RallyFrontLRebound"));
+            rallyFrontRBump = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "RallyFrontRBump"));
+            rallyFrontRRebound = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "RallyFrontRRebound"));
+            rallyRearLBump = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "RallyRearLBump"));
+            rallyRearLRebound = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "RallyRearLRebound"));
+            rallyRearRBump = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "RallyRearRBump"));
+            rallyRearRRebound = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "RallyRearRRebound"));
 
-            stockFrontBump = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "StockFrontBump"));
-            stockFrontRebound = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "StockFrontRebound"));
-            stockRearBump = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "StockRearBump"));
-            stockRearRebound = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspension, "StockRearRebound"));
+            stockFrontBump = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "StockFrontBump"));
+            stockFrontRebound = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "StockFrontRebound"));
+            stockRearBump = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "StockRearBump"));
+            stockRearRebound = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "StockRearRebound"));
 
             // Store default gear ratios and create FloatFields
             if (drivetrain)
@@ -209,7 +209,7 @@ namespace SatsumaTuner95
 
             boostPowerFloatClamp = Helpers.GetFloatClampFromFSM(boostFsm, "Boost", 5);
             boostSetMultiplierSetProperty2 = Helpers.GetSetPropertyFromFSM(boostFsm, "Boost", 18);
-            waitPlayerSetProperty = Helpers.GetSetPropertyFromFSM(boostFsm, "Wait player", 4);
+            boostWaitPlayerSetProperty = Helpers.GetSetPropertyFromFSM(boostFsm, "Wait player", 4);
             revLimiterSetProperty = Helpers.GetSetPropertyFromFSM(revLimiterFsm, "Normal revs", 1);
             revLimiterFloatClamp = Helpers.GetFloatClampFromFSM(revLimiterFsm, "Valve float", 5);
             revLimiterFloatOperator = Helpers.GetFloatOperatorFromFSM(revLimiterFsm, "Valve float", 4);
@@ -266,11 +266,14 @@ namespace SatsumaTuner95
             bool value = !useCustomPowerMultiplier;
             boostPowerFloatClamp.Enabled = value;
             boostSetMultiplierSetProperty2.Enabled = value;
-            waitPlayerSetProperty.Enabled = value;
+            boostWaitPlayerSetProperty.Enabled = value;
             revLimiterFloatClamp.Enabled = value;
             revLimiterSetProperty.Enabled = value;
             revLimiterFloatOperator.Enabled = value;
-            drivetrain.powerMultiplier = powerMultiplierOverride.FloatVariable;
+
+            float newPowerMultiplierValue = useCustomPowerMultiplier ? powerMultiplierOverride.FloatVariable : 1;
+            globalPowerMultiplierFsmFloat.Value = newPowerMultiplierValue;
+            drivetrain.powerMultiplier = newPowerMultiplierValue;
         }
 
         private void UpdateCustomWheelOffsets()
