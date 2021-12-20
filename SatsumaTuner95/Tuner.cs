@@ -18,6 +18,7 @@ namespace SatsumaTuner95
         private bool guiShowWheels = false;
         private bool guiShowSuspension = false;
         private bool guiShowDrivingAssistance = false;
+        private bool guiShowMisc = false;
 
         // satsuma components
         private Transform satsuma;
@@ -32,6 +33,9 @@ namespace SatsumaTuner95
         private Transform wheelFR;
         private Transform wheelRL;
         private Transform wheelRR;
+
+        // center of gravity transform
+        private Transform cogTransform;
 
         // various FSM State Actions to disable, when using power multiplier override
         private FloatClamp boostPowerFloatClamp;
@@ -93,6 +97,9 @@ namespace SatsumaTuner95
         private float frontWheelOffsetX, rearWheelOffsetX;
         private Vector3 originalFlPosition, originalFrPosition, originalRlPosition, originalRrPosition;
 
+        // center of  gravity
+        private GUIFields.FloatField cog;
+
         // increase amount field
         private float increaseAmount = 0.01f; // for + and - buttons
         private GUIFields.FloatField increaseAmountField;
@@ -135,6 +142,9 @@ namespace SatsumaTuner95
             if (wheelRR)
                 originalRrPosition = wheelRR.transform.localPosition;
 
+            // Get Center of Gravity
+            cogTransform = satsuma.Find("CoG");
+
             try
             {
                 boostFsm = satsuma.Find("CarSimulation/Engine/N2O").GetComponent<PlayMakerFSM>();
@@ -156,8 +166,12 @@ namespace SatsumaTuner95
             wheelPosRally = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "WheelPosRally"));
             wheelPosStock = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "WheelPosStock"));
 
+            // wheel offset x
             frontWheelsOffsetX = GUIFields.FloatField.CreateFloatField(frontWheelOffsetX, "Front Wheels Offset X");
             rearWheelsOffsetX = GUIFields.FloatField.CreateFloatField(rearWheelOffsetX, "Rear Wheels Offset Y");
+
+            // center of gravity
+            cog = GUIFields.FloatField.CreateFloatField(cogTransform.localPosition.y, "Center of Gravity");
 
             // travel
             travelLong = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "TravelLong"));
@@ -440,6 +454,11 @@ namespace SatsumaTuner95
             if (guiShowDrivingAssistance)
                 DrivingAssistanceGUI();
 
+            if (GUILayout.Button("Misc"))
+                guiShowMisc = !guiShowMisc;
+            if (guiShowMisc)
+                MiscGUI();
+
             GUILayout.EndScrollView();
         }
 
@@ -658,6 +677,20 @@ namespace SatsumaTuner95
 
             GUILayout.EndVertical();
         }
+
+        private void MiscGUI()
+        {
+            GUILayout.BeginVertical("box");
+
+            // Center of Gravity
+            if(cogTransform)
+            {
+                if (GUIFields.FloatField.DrawFloatField(cog, true))
+                    cogTransform.localPosition = new Vector3(cogTransform.localPosition.x, cog.FloatVariable, cogTransform.localPosition.z);
+            }
+
+            GUILayout.EndVertical();
+        }
         #endregion
 
         #region Save, Load and Restore
@@ -704,6 +737,10 @@ namespace SatsumaTuner95
                 data.TcsAllowedSlip = axisCarController.TCSAllowedSlip;
                 data.TcsMinVelocity = axisCarController.TCSMinVelocity;
             }
+
+            // center of gravity
+            if (cogTransform)
+                data.CoG = cogTransform.localPosition.y;
 
             // suspension
             // suspension travel
@@ -776,6 +813,13 @@ namespace SatsumaTuner95
                 axisCarController.TCS = saveData.TCS;
                 axisCarController.TCSAllowedSlip = saveData.TcsAllowedSlip;
                 axisCarController.TCSMinVelocity = saveData.TcsMinVelocity;
+            }
+
+            // center of gravity
+            if (cogTransform && saveData.CoG != 0)
+            {
+                cog.UpdateNewValue(saveData.CoG);
+                cogTransform.localPosition = new Vector3(cogTransform.localPosition.x, saveData.CoG, cogTransform.localPosition.z);
             }
 
             // wheels custom offset
@@ -866,6 +910,13 @@ namespace SatsumaTuner95
                 axisCarController.TCS = false;
                 tcsAllowedSlip.RestoreValue();
                 tcsMinVelocity.RestoreValue();
+            }
+
+            // center of gravity
+            if (cogTransform)
+            {
+                cog.RestoreValue();
+                cogTransform.localPosition = new Vector3(cogTransform.localPosition.x, cogTransform.localPosition.y, cogTransform.localPosition.z);
             }
 
             // suspension

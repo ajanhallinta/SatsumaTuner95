@@ -51,6 +51,10 @@
         public float StockRearBump;
         public float StockRearRebound;
 
+        // Center of Gravity
+        public float CoG;
+
+        // Gear ratios
         public System.Collections.Generic.List<float> GearRatios = new System.Collections.Generic.List<float>();
     }
 }
