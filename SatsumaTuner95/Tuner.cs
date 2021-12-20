@@ -24,6 +24,7 @@ namespace SatsumaTuner95
         private Transform satsuma;
         private Drivetrain drivetrain;
         private AxisCarController axisCarController;
+        private Axles axles;
         private PlayMakerFSM suspensionFsm;
         private PlayMakerFSM boostFsm;
         private PlayMakerFSM revLimiterFsm;
@@ -52,6 +53,10 @@ namespace SatsumaTuner95
         private GUIFields.FsmFloatField wheelPosLong;
         private GUIFields.FsmFloatField wheelPosRally;
         private GUIFields.FsmFloatField wheelPosStock;
+
+        // variable fields camber
+        private GUIFields.FloatField frontCamber;
+        private GUIFields.FloatField rearCamber;
 
         // variable fields suspension properties
         // travel
@@ -119,6 +124,8 @@ namespace SatsumaTuner95
             satsuma = PlayMakerGlobals.Instance.Variables.FindFsmGameObject("TheCar").Value.transform;
             drivetrain = satsuma.GetComponent<Drivetrain>();
             axisCarController = satsuma.GetComponent<AxisCarController>();
+            axles = satsuma.GetComponent<Axles>();
+
             // TODO: failsafes
             suspensionFsm = satsuma.Find("CarSimulation/Car/Suspension").GetComponent<PlayMakerFSM>();
             revLimiterFsm = satsuma.Find("CarSimulation/Engine/RevLimiter").GetComponent<PlayMakerFSM>();
@@ -165,10 +172,14 @@ namespace SatsumaTuner95
             wheelPosLong = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "WheelPosLong"));
             wheelPosRally = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "WheelPosRally"));
             wheelPosStock = GUIFields.FsmFloatField.CreateFsmFloatField(MSCLoader.PlayMakerExtensions.GetVariable<FsmFloat>(suspensionFsm, "WheelPosStock"));
-
+            
             // wheel offset x
             frontWheelsOffsetX = GUIFields.FloatField.CreateFloatField(frontWheelOffsetX, "Front Wheels Offset X");
             rearWheelsOffsetX = GUIFields.FloatField.CreateFloatField(rearWheelOffsetX, "Rear Wheels Offset Y");
+
+            // camber
+            frontCamber = GUIFields.FloatField.CreateFloatField(axles.frontAxle.leftWheel.camber, "Front Camber");
+            rearCamber = GUIFields.FloatField.CreateFloatField(axles.rearAxle.leftWheel.camber, "Rear Camber");
 
             // center of gravity
             cog = GUIFields.FloatField.CreateFloatField(cogTransform.localPosition.y, "Center of Gravity");
@@ -524,6 +535,19 @@ namespace SatsumaTuner95
             GUIFields.FloatField.DrawFloatField(rearWheelsOffsetX, true);
             rearWheelOffsetX = rearWheelsOffsetX.FloatVariable;
 
+            // Front Camber
+            if (GUIFields.FloatField.DrawFloatField(frontCamber, true))
+            {
+                axles.frontAxle.leftWheel.camber = frontCamber.FloatVariable;
+                axles.frontAxle.rightWheel.camber = -frontCamber.FloatVariable;
+            }
+            // Rear Camber
+            if (GUIFields.FloatField.DrawFloatField(rearCamber, true))
+            {
+                axles.rearAxle.leftWheel.camber = rearCamber.FloatVariable;
+                axles.rearAxle.rightWheel.camber = -rearCamber.FloatVariable;
+            }
+                
             GUILayout.EndVertical();
         }
 
@@ -708,6 +732,13 @@ namespace SatsumaTuner95
             data.FrontWheelsOffsetX = frontWheelOffsetX;
             data.RearWheelsOffsetX = rearWheelOffsetX;
 
+            // cambers
+            if(axles)
+            {
+                data.FrontCamber = axles.frontAxle.leftWheel.camber;
+                data.RearCamber = axles.rearAxle.leftWheel.camber;
+            }
+
             // power multiplier
             data.PowerMultiplierOverride = powerMultiplierOverride.FloatVariable;
             data.PowerMultiplierOverrideEnabled = useCustomPowerMultiplier;
@@ -829,6 +860,17 @@ namespace SatsumaTuner95
             frontWheelsOffsetX.UpdateNewValue(saveData.FrontWheelsOffsetX);
             rearWheelsOffsetX.UpdateNewValue(saveData.RearWheelsOffsetX);
 
+            // wheel camber
+            if(axles)
+            {
+                frontCamber.UpdateNewValue(saveData.FrontCamber);
+                rearCamber.UpdateNewValue(saveData.RearCamber);
+                axles.frontAxle.leftWheel.camber = saveData.FrontCamber;
+                axles.frontAxle.rightWheel.camber = -saveData.FrontCamber;
+                axles.rearAxle.leftWheel.camber = saveData.RearCamber;
+                axles.rearAxle.rightWheel.camber = -saveData.RearCamber;
+            }
+
             // wheelpos
             wheelPosLong.UpdateNewValue(saveData.WheelPosLong, true);
             wheelPosRally.UpdateNewValue(saveData.WheelPosRally, true);
@@ -874,14 +916,23 @@ namespace SatsumaTuner95
 
             // wheels
             if (useCustomWheelOffsets)
-            {
                 ResetWheelOffsetX();
-            }
             useCustomWheelOffsets = false;
             frontWheelOffsetX = 0;
             frontWheelsOffsetX.UpdateNewValue(0);
             rearWheelOffsetX = 0;
             rearWheelsOffsetX.UpdateNewValue(0);
+
+            // camber
+            if(axles)
+            {
+                frontCamber.RestoreValue();
+                rearCamber.RestoreValue();
+                axles.frontAxle.leftWheel.camber = frontCamber.FloatVariable;
+                axles.frontAxle.rightWheel.camber = -frontCamber.FloatVariable;
+                axles.rearAxle.leftWheel.camber = rearCamber.FloatVariable;
+                axles.rearAxle.rightWheel.camber = -rearCamber.FloatVariable;
+            }
 
             // power
             powerMultiplierOverride.UpdateNewValue(1);

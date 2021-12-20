@@ -20,6 +20,12 @@
         public bool ESP;
         public float EspStrength;
         public float EspMinVelocity;
+
+        // cambers
+        public float FrontCamber;
+        public float RearCamber;
+
+        // wheel offset x
         public bool CustomWheelsOffsetEnabled;
         public float FrontWheelsOffsetX;
         public float RearWheelsOffsetX;
